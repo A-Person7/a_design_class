@@ -1,0 +1,54 @@
+\documentclass[11pt]{beamer}
+
+% https://latex-beamer.com/tutorials/beamer-themes/2/
+% Consider also  CambridgeUS, 
+% \usetheme{Boadilla}
+% https://gitlab.com/RomainNOEL/beamertheme-gotham
+\usetheme{gotham}
+
+\gothamset{
+	background=light,
+	numbering= framenumber,
+	% tocframe template= gotham simple,
+	parttocframe default=off,
+	sectiontocframe default=off,
+	subsectiontocframe default=off,
+}
+
+\usepackage{wrapfig}
+
+% \usepackage[margin=1.00in]{geometry}
+% \usepackage{float}
+% \usepackage{graphicx}
+% \usepackage{tikz}
+% \usepackage{indentfirst}
+
+\title{MENG 330}
+\subtitle{Project One}
+\author{Lucas S. Johnston}
+\date{\today}
+
+\begin{document}
+    \maketitle
+    
+    \begin{frame}
+    \section{Introducing the part}
+        \begin{itemize}
+            \item Cantilever beam
+            \item Fixed support at wall
+            \item Structural Steel (Ansys material library)
+            \item Arbitrary loading conditions at circular faces
+            \item Chosen to mesh with the following element size
+            \begin{itemize}
+                \item 1E-3 m at the wall boundary
+                \item 3E-3 m everywhere else
+            \end{itemize}
+        \end{itemize}
+    \end{frame}
+    
+    \begin{frame}
+    \section{Breaking Ansys}
+        In an attempt to break Ansys, I changed the element size on the entire body to 1E10 m, and added an extra BC.
+    \end{frame}
+
+\end{document}
