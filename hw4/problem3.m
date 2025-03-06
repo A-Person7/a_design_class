@@ -53,6 +53,10 @@ else
     fprintf("Euler buckling criteria not satisfied for case b. Use Johnson buckling.\n");
 end
 
+% NOTE: if any of the above values change, you'll have to MANUALLY revaluate the following lines,
+%   and pick a different preferred size, ensure the right buckling is used, etc.
+
+
 fprintf("\nApplying Johnson buckling:\n");
 [d_b, L_b] = get_min_distance_johnson(L_b, param);
 fprintf("The minimum acceptable diameter for case b is %.3f inches.\n", d_b);
@@ -63,6 +67,13 @@ fprintf("\nConverting to preferred sizes:\n");
 fprintf("The preferred size for case a is 1.20 inches.\n");
 fprintf("The preferred size for case b is  3/4 inches.\n");
 
+fprintf("\n");
+
+n_a = get_safety_factor_euler(1.2, L_a, param);
+n_b = get_safety_factor_johnson(3/4, L_b, param);
+
+fprintf("The resultant safety factor for a is %.3f.\n", n_a);
+fprintf("The resultant safety factor for b is %.3f.\n", n_b);
 
 
 % Inputs:
@@ -97,6 +108,35 @@ function [D, L] = get_min_distance_johnson(L, param)
 
     D = double(solve(P_cr/param.P == param.n_d)); % [in]
     L = L; % [in]
+end
+
+% Inputs:
+%   - d -- the diameter of the rod [in]
+%   - L -- the length of the rod, as drawn on paper [in]
+%   - param -- the param struct generated earlier, all entries must be in base imperial units
+% Outputs:
+%   - n -- the resultant safety factor
+function n = get_safety_factor_euler(d, L, param)
+    I = pi/64 * (d)^4; % [in^4]
+    P_cr = param.C * pi^2 * param.E * I / L^2; % [lbf]
+
+    n = P_cr/param.P; 
+end
+
+% Inputs:
+%   - d -- the diameter of the rod [in]
+%   - L -- the length of the rod, as drawn on paper [in]
+%   - param -- the param struct generated earlier, all entries must be in base imperial units
+% Outputs:
+%   - n -- the resultant safety factor
+function n = get_safety_factor_johnson(d, L, param) 
+    I = pi/64 * (d)^4; % [in^4]
+    % Area
+    A = pi * (d/2)^2; % [in^2]
+    k = sqrt(I/A);
+    P_cr = A * (param.S_y  - (param.S_y * L / (2*pi*k))^2 / (param.C * param.E));
+
+    n = P_cr/param.P;
 end
 
 function l_by_k = get_slenderness_ratio(d, L, param)

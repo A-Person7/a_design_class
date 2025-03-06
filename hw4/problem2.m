@@ -21,12 +21,12 @@ M_b =  -w*x^2 / 2 + R*(x - 0.6); % 0.6 <= x < 1.5
 M_c = -w*1.5*(x-0.75) + R*(x - 0.6); % 1.5 <= x < 2
 
 % Can ignore 1/EI as it's set to 0 anyways. Bad practice, but can omit units as well 
-int_a = int(M_a * diff(M_a, R), x);
-int_b = int(M_b * diff(M_b, R), x);
-int_c = int(M_c * diff(M_c, R), x);
+int_a = int(M_a * diff(M_a, R), x);  % [Nm^2]
+int_b = int(M_b * diff(M_b, R), x);  % [Nm^2]
+int_c = int(M_c * diff(M_c, R), x);  % [Nm^2]
 indf_int = subs(int_a, x, 0.6) - subs(int_a, x, 0) + ...
     subs(int_b, x, 1.5) - subs(int_b, x, 0.6) + ...
-    subs(int_c, x, 2.0) - subs(int_c, x, 1.5)
+    subs(int_c, x, 2.0) - subs(int_c, x, 1.5); % [Nm^3]
 
 R = double(solve(indf_int == 0)); % [N]
 

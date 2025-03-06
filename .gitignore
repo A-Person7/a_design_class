@@ -12,6 +12,8 @@
 *.docx
 *.odt
 *.pdf
+*.zip
+*.~lock*
 # (Backup of Ansys data, figures used, redundant)
 */Archive
 # Ignore LaTeX cache
