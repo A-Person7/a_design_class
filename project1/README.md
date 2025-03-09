@@ -13,7 +13,8 @@ This slideshow uses the Gotham theme. You can either install and use this theme,
 
 ### Compiling
 
-Compile using your preferred GUI, or use the command line. You might need to change your config settings to produce a PDF.
+Compile using your preferred GUI, or use the command line. You might need to change your config settings to produce a PDF. You will need to be in this (`project1`) directory to do this.
 ```bash
 latexmk presentation.tex
 ```
+You should now see a file called `presentation.pdf`. If it has a different file extension (that isn't `.tex`), change your LaTeX engine settings. If you open it and see (??) instead of an equation number, simply compile the document again and it will update.
