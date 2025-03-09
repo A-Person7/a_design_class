@@ -20,4 +20,4 @@
 */latex_cache
 
 # Don't ignore any figures/images for the projects
-!/project*/figs*
+!/project*/figs/*
