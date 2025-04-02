@@ -19,6 +19,7 @@ num_2 = get_num_cycles(750, 800, 900, f_st, "2");
 % Case 3
 num_3 = get_num_cycles(750, 1.1*10^3, 1.2*10^3, 0.85, "3");
 
+
 % get_num_cycles
 %
 % Outputs the number of cycles a given fully reversed loading condition can withstand given 
@@ -65,7 +66,7 @@ function num = get_num_cycles(sigma_rev, S_y, S_ut, f, label)
         return;
     end
     
-    fprintf("\t- Case %s doesn't fail in static fatigue.\n", label);
+    fprintf("\t- Case %s doesn't fail in static failure.\n", label);
 
     % The same for every case
     S_e = 300; % [MPa]
@@ -79,7 +80,9 @@ function num = get_num_cycles(sigma_rev, S_y, S_ut, f, label)
         % Too lazy to solve by hand, let n be a standin for num to avoid changing variable types
         syms n;
         assume(n, "positive");
-    
+   
+        % Need to be careful, Shigley, slides treat log as layman/engineers (log_10), but MATLAB
+        %   treats it as a mathmatician might (natural log), need to be explicit about base 10
         eq = sigma_rev == S_ut * n^(log10(f)/3);
         num = double(solve(eq));
 

@@ -6,7 +6,6 @@ clear all;
 
 
 % Notation:
-%   I may use mat to abreviate material
 %   _st is the AISI 1020 CD Steel
 %   _al is the 319-T6 Aluminum
 
@@ -14,20 +13,14 @@ clear all;
 b = 2.5*10; % [mm]
 h = 0.5*10; % [mm]
 
-
 %% Material Properties
-% First things first--transform ultimate strength to operating temperature
-% Operating temperature
-T_op = 150; % [C]
 
 
-% Table A-20 in Shigley, transformed for temp
+% Table A-20 in Shigley
 S_ut_st = 470; % [MPa]
 % Table A-24
 S_ut_al = 248; % [MPa]
 
-% Assume high cycle fatigue because, uhm, uh, hmmm
-%   Engineering decision
 
 %% Perfect Endurance limits/fatigue strength at 5E8 cycles
 % Table A-24.b
@@ -37,7 +30,7 @@ S_e_prime_st = NaN; % [MPa]
 % Eq 6-10
 if (S_ut_st <= 1400) % 1400 is in [MPa]
     S_e_prime_st = 0.5*S_ut_st;
-elseif (S_ut_al > 1400) % 1400 is in [MPa]
+elseif (S_ut_st > 1400) % 1400 is in [MPa]
     S_e_prime_st = 700; % [MPa]
 else 
     assert(false, "You've messed something up, you're on your own on this one.");
@@ -86,6 +79,9 @@ fprintf("k_c_st = %.3f \t k_c_al = %.3f\n", k_c_st, k_c_al);
 
 %% k_d 
 
+% Operating temperature
+T_op = 150; % [C]
+
 % Use formula given in slides for temperature in Celcius
 S_T_by_S_RT = 0.99 + 5.9*10^(-4)*T_op - 2.1 * 10^(-6)*T_op^2;
 
@@ -109,7 +105,7 @@ fprintf("k_e_st = %.3f \t k_e_al = %.3f\n", k_e_st, k_e_al);
 
 %% k_f
 
-% Metal spraying is present, see SLide 32 of 43 in 330_S25_Lecture14_Fatigue1_FullyReversed.pdf 
+% Metal spraying is present, see Slide 32 of 43 in 330_S25_Lecture14_Fatigue1_FullyReversed.pdf 
 k_f_al = 0.86;
 k_f_st = 0.86;
 
@@ -123,48 +119,3 @@ S_f_5E8_al = k_a_al * k_b_al * k_c_al * k_d_al * k_e_al * k_f_al * S_f_5E8_prime
 
 fprintf("\nS_e_st      = %6.3f MPa.\n", S_e_st);
 fprintf("S_f_5E8_al  = %7.3f MPa.\n", S_f_5E8_al);
-
-% Whoops, ignore everything after this line
-
-% %% Calculate cycle lifetime
-% 
-% % Aluminum
-% N_max_al = 5E8;
-% 
-% % See Figure 6-18
-% % Reading the text, this is applicable for when S_e = 0.5*S_y 
-% %   However, we're going to have to make some CRUDE approximations here as I don't see an 
-% %   applicable chart for aluminum
-% % use temperature-transformed S_ut value
-% % 255.7 MPa ~ 37.1 ksi, which is off the chart, therefore use f = 0.9
-% f_al = 0.9;
-% 
-% % Need to be careful, Shigley, slides treat log as layman/engineers (log_10), but MATLAB
-% %   treats it as a mathmatician might (natural log), need to be explicit
-% % Personally, log being log_10 makes more sense, because ln is shorter anyways
-% b = 1/(3 - log10(N_max_al)) * log10(f_al * S_ut_al / S_f_5E8_al);
-% a = 10^((log10(N_max_al) * log10(f_al * S_ut_al) - 3*log10(S_f_5E8_al))/(log10(N_max_al)-3));
-% 
-% % Steel
-% % Figure 6-18, use temperature-transformed S_ut value
-% % "If you squint, it's just slightly less than 0.9..."
-% f_st = 0.899;
-% 
-% a_st = (f_st * S_ut_st)^2 / (S_e_st);
-% b_st = -1/3 * log10(f_st*S_ut_st / S_e_st);
-% 
-% N_al = (S_f_5E8_al/a_al) ^ (1/b_al); % [cycles]
-% N_st = (S_e_st/a_st) ^ (1/b_st); % [cycles]
-% 
-% fprintf("\nN_st  = %s cycles.\n", addComma(N_al));
-% fprintf(  "N_al  = %s cycles.\n", addComma(N_st));
-% 
-% % Use Java formatting code to get nicer looking numbers
-% % MATLAB is kind of secretly Java, some C++, and probably a little left over FORTRAN in a coat
-% %   anyways
-% % https://www.mathworks.com/matlabcentral/answers/96131-is-there-a-format-in-matlab-to-display-numbers-such-that-commas-are-automatically-inserted-into-the
-% function numOut = addComma(numIn)
-%    import java.text.*
-%    jf=java.text.DecimalFormat; % comma for thousands, three decimal places
-%    numOut= char(jf.format(numIn)); % omit "char" if you want a string out
-% end
