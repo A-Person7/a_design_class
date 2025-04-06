@@ -1,3 +1,7 @@
+% The smartest machine design sudent of today versus the hardest machine design problem of history
+% https://www.youtube.com/watch?v=h_9RC8DCEPM
+
+
 clear all;
 
 %% Geometry
