@@ -53,7 +53,6 @@ R_C = double(sln.R_C); % [N]
 syms V(x) M(x) % [N], [N mm], respectively
 % Dummy variable, standin for x
 syms t; % [mm]
-% V(x) = R_B*heaviside(x) - R_C * heaviside(x - center_length) + F * heaviside(x - (center_length - end_length));
 V(x) = R_B*heaviside(x) + R_C * heaviside(x - center_length) ...
     - F * heaviside(x - (center_length + end_length));
 
@@ -62,20 +61,20 @@ M(x) = int(subs(V(x), x, t), t, 0, x);
 if (paranoid) 
     % For display
     extra_length = 10; % [mm]
-    x_num = -extra_length:0.1:(center_length + end_length + extra_length);
-    v_num = double(subs(V, x, x_num));
-    m_num = double(subs(M, x, x_num));
+    x_num = -extra_length:0.1:(center_length + end_length + extra_length); % [mm]
+    v_num = double(subs(V, x, x_num)); % [N]
+    m_num = double(subs(M, x, x_num)); % [N mm]
 
     f = figure;
     subplot(2, 1, 1);
     plot(x_num, v_num)
-    xlabel("Position [in]");
+    xlabel("Position [mm]");
     ylabel("Shear [N]");
     title("Shear Diagram");
 
     subplot(2, 1, 2);
     plot(x_num, m_num)
-    xlabel("Position [in]");
+    xlabel("Position [mm]");
     ylabel("Moment [N mm]");
     title("Bending Moment Diagram");
 
@@ -149,57 +148,89 @@ fprintf("The minimum allowable diameter based on static yielding is %.2f mm.\n",
 fprintf("\n");
 
 %% Part b
-
-syms dia; % [mm]
-assume(dia, "positive");
-assume(dia > 25 & dia < 75); % See answer range, both numbers have units of [mm]
-
-% Assume that we want infinite life
-% Use moment case as worst case scenario, based on last part.
-
-% Ignore stress concentrations in the mean stress as it's a ductile material.
-sigma_m = sqrt(3*tau_torsion^2); % [MPa]
-
-% Not a particularly insightful formula...
-sigma_a_0 = sqrt(sigma^2); % [MPa]
-
 % Analyze stress concentrations at the bearing shoulders or at the gear
 % From Table 7-1, for first iteration
 K_t = 2.7;
+get_diam_from_fatigue(K_t, S_ut, tau_torsion, sigma, safety_factor);
 
-% To avoid magic numbers floating around
-mm_to_in = 1/25.4; % [in/mm]
-MPa_to_ksi =  0.1450377377; % [ksi/MPa]
+% Use Figure A-15-9 to iterate
+% This value was grabbed manually, needs to be updated manually if anything changes
+K_t = 2.3;
+get_diam_from_fatigue(K_t, S_ut, tau_torsion, sigma, safety_factor);
 
-
-% Assume r/d = 0.02
-% Radius of fillet, in inches to match curve fit eq
-r_in = dia * 0.02 / mm_to_in; % [in]
-
-sqrt_a = 0.246-3.08e-3*(S_ut*MPa_to_ksi)+1.51e-5*(S_ut*MPa_to_ksi)^2- ...
-    2.67e-8*(S_ut*MPa_to_ksi)^3; % [in^0.5]
-
-% I could use the graph, or I could use the Eq in Slide 28 of 43 in 
-%   330_S25_Lecture14_Fatigue1_FullyReversed.pdf
-q = 1 / (1 + sqrt_a / sqrt(r_in));
-
-K_f = 1 + q * (K_t - 1);
-
-sigma_a = K_f * sigma_a_0; % [MPa]
-
-
-endurance_strength = get_endurance_strength(S_ut, dia); % [MPa]
-
-% Since sigma_m >= 0 MPa, get this equation 
-% Don't even bother doing this symbolically, go directly to numerical solver
-% Read the MATLAB docs
-d_fatigue = vpasolve(sigma_a / endurance_strength + sigma_m / S_ut == 1/safety_factor); % [mm]
-
-fprintf("The minimum allowable diameter based on fatigue is %.2f mm.\n", d_fatigue);
 
 
 %% Functions
 
+% get_diam_from_fatigue
+% 
+% Gets the minimal acceptable diameter of the shaft due to fatigue, assuming worst case scenario 
+%   for stress is at max bending stress (not shear stress).
+% 
+% This function uses metric units, requires the symbolic toolbox, and requires the caller to expect 
+%   the diameter to converge between a range of 25 mm and 75 mm. It is the caller's responsibility
+%   to ensure the setup is such that the output converges, this function failing to converge is 
+%   not well documented and can lead to unexpected behavior.
+%
+% Inputs:
+%   K_t -- the current stress concentration factor to use for iteration as a scalar double 
+%       - See Table 7-1 and Figure A-15-9
+%   S_ut -- the ultimate strength of the material in question, in [MPa] as a scalar double 
+%   tau_torsion -- the shear due to torsion, in [MPa], as a scalar symbolic expression function 
+%       of dia (which is the diameter in [mm])
+%   sigma -- the axial stress due to bending, in [MPa], as a scalar symbolic expression function 
+%       of dia (which is the diameter in [mm])
+%   safety_factor -- the design fator of safety as a scalar double
+%
+% Outputs:
+%   - d_fatigue -- the minimum acceptable diameter based on the given K_t as a scalar double in [mm]
+%
+% Side Effects:
+%   - prints output to the console
+function d_fatigue = get_diam_from_fatigue(K_t, S_ut, tau_torsion, sigma, safety_factor)
+    syms dia; % [mm]
+    assume(dia, "positive");
+    assume(dia > 25 & dia < 75); % See answer range, both numbers have units of [mm]
+    
+    % Assume that we want infinite life
+    % Use moment case as worst case scenario, based on last part.
+    
+    % Ignore stress concentrations in the mean stress as it's a ductile material.
+    sigma_m = sqrt(3*tau_torsion^2); % [MPa]
+    
+    % Not a particularly insightful formula...
+    sigma_a_0 = sqrt(sigma^2); % [MPa]
+    
+    % To avoid magic numbers floating around
+    mm_to_in = 1/25.4; % [in/mm]
+    MPa_to_ksi =  0.1450377377; % [ksi/MPa]
+    
+    
+    % Assume r/d = 0.02
+    % Radius of fillet, in inches to match curve fit eq
+    r_in = dia * 0.02 / mm_to_in; % [in]
+    
+    sqrt_a = 0.246-3.08e-3*(S_ut*MPa_to_ksi)+1.51e-5*(S_ut*MPa_to_ksi)^2- ...
+        2.67e-8*(S_ut*MPa_to_ksi)^3; % [in^0.5]
+    
+    % I could use the graph, or I could use the Eq in Slide 28 of 43 in 
+    %   330_S25_Lecture14_Fatigue1_FullyReversed.pdf
+    q = 1 / (1 + sqrt_a / sqrt(r_in));
+    
+    K_f = 1 + q * (K_t - 1);
+    
+    sigma_a = K_f * sigma_a_0; % [MPa]
+    
+    endurance_strength = get_endurance_strength(S_ut, dia); % [MPa]
+    
+    % Since sigma_m >= 0 MPa, get this equation 
+    % Don't even bother doing this symbolically, go directly to numerical solver
+    % Read the MATLAB docs
+    d_fatigue = vpasolve(sigma_a / endurance_strength + sigma_m / S_ut == 1/safety_factor); % [mm]
+    
+    fprintf("The minimum allowable diameter based on fatigue for a K_t value of " ...
+        + "%.2f is %.2f mm.\n", K_t, d_fatigue);
+end
 
 % Gets the endurance strength of steel given the following conditions:
 %   - as machined
@@ -208,6 +239,7 @@ fprintf("The minimum allowable diameter based on fatigue is %.2f mm.\n", d_fatig
 %   - no miscellaneous effects
 %
 % The resultant value is only valid for comparison against von Mises stress
+% In metric units.
 %   
 % ALL INPUTS, OUTPUTS MUST BE SCALARS
 % 
@@ -218,11 +250,11 @@ fprintf("The minimum allowable diameter based on fatigue is %.2f mm.\n", d_fatig
 %   
 %  Outputs:
 %   - endurance_strength -- the endurance strength (S_e) to compare against von Mises equivalent
-%       stress
+%       stress [MPa]
 %       - may be either symbolic expression (function of dia) or of type double depending on 
 %           type of dia
 function endurance_strength = get_endurance_strength(S_ut, dia)
-    % See Eq 6-10
+    % See Eq 6-8
     S_e_prime = 0.5*S_ut; % [MPa]
     if (S_ut > 1400) % 1400 is in units of [MPa]
         S_e_prime = 700; % [MPa]

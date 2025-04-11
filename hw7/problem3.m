@@ -184,7 +184,7 @@ disp(t);
 %   - closes every varargin it gets 
 % 
 % Errors:
-%   - will throw an assert error if told no
+%   - will throw an assert error if told to
 %
 % prompts the user if they want to proceed
 % inputs to this function are handles to be closed, and are an optional parameter
@@ -216,18 +216,34 @@ function proceed_prompt(query, varargin)
     fprintf("Moving on...\n");
 end
 
+% numOut
+% 
 % Use Java formatting code to get nicer looking numbers (adds commas so 1000 (double) becomes 
 %   '1,000' (char)
 % MATLAB is kind of secretly Java, some C++, and probably a little left over FORTRAN in a coat
 %   anyways
+% Not my original function, taken from:
 % https://www.mathworks.com/matlabcentral/answers/96131-is-there-a-format-in-matlab-to-display-numbers-such-that-commas-are-automatically-inserted-into-the
+%
+% Input:
+%   - numIn -- the number input as a scalar double
+% 
+% Output:
+%   - numOut -- the string output as a char array
 function numOut = addComma(numIn)
    import java.text.*
    jf=java.text.DecimalFormat; % comma for thousands, three decimal places
    numOut= char(jf.format(numIn)); % omit "char" if you want a string out
 end
 
+% rad_per_sec_to_rpm
+% 
 % Does exactly what it sounds like
+% 
+% Input:
+%   - in -- angular speed in [rad/s] as a double or symbolic expression, can be an array
+% Output: 
+%   - out -- angular speed in [rev/min] as the same type as input
 function out = rad_per_sec_to_rpm(in) 
     out = (in .* 60) ./ (2*pi); % [RPM]
 end
