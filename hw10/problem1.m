@@ -113,11 +113,11 @@ print_and_validate("R", R*100, "%", 90, 95);
 function print_and_validate(name, val, units, range_low, range_high)
     % Run `help strcmp` or `doc strcmp` for more info
     if (strcmp(class(val), 'string') || strcmp(class(val), 'char'))
-        fprintf("%7s = %7s %3s\n", name, val, units);
+        fprintf("%-7s = %-7s %-3s\n", name, val, units);
         return;
     end
  
-    fprintf("%7s = %7.3f %3s\n", name, val, units);
+    fprintf("%-7s = %-7.3f %-3s\n", name, val, units);
     
     % Check if range is NaN, if not, proceed with range checking
     if (~sum(isnan([range_low range_high])))
